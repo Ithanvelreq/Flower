@@ -1,4 +1,5 @@
 import soundfile as sf
+import torch
 
 perc_kws = ['Kick', 'KICK', 'KD', 'kick', 'BD', 'Snare', 'SNARE', 'snare',
             'SD', 'HH', 'HiHat', 'HIHAT', 'hihat', 'hat', 'HAT', 'Hat',
@@ -22,3 +23,16 @@ nr_samples = 44100 * 1
 def get_audio_length(fn):
     with sf.SoundFile(fn, 'r') as f:
         return len(f)
+
+
+def my_torch_istft(spec, n_fft=2048):
+    zeros = torch.zeros(spec.shape[0], 1, 48, 2).to(spec.device)
+    # Transpose the spectrogram to fit the dimensions required by torch.istft
+    spec = spec.permute(0, 2, 3, 1)
+    # Append the fundamental to the spectrogram
+    spec = torch.cat([zeros, spec], 1).contiguous()
+
+    spec = torch.view_as_complex(spec)
+    sig = torch.istft(spec, n_fft=n_fft)
+    return sig
+

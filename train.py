@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 
 from Olesia import Olesia
 from data import prepare_fn_groups, ContrastLoader
-from utils import get_audio_length, nr_samples
+from utils import get_audio_length, nr_samples, my_torch_istft
 
 
 def filter1(fn):
@@ -26,16 +26,10 @@ def filter2(fn):
     return filter1(fn)
 
 
-def my_torch_istft(spec, n_fft=2048):
-    zeros = torch.zeros(spec.shape[0], 1, 48, 2).to(spec.device)
-    # Transpose the spectrogram to fit the dimensions required by torch.istft
-    spec = spec.permute(0, 2, 3, 1)
-    # Append the fundamental to the spectrogram
-    spec = torch.cat([zeros, spec], 1).contiguous()
-
-    spec = torch.view_as_complex(spec)
-    sig = torch.istft(spec, n_fft=n_fft)
-    return sig
+def test_inputs(input_batch, sound_batch, i):
+    sf.write("mix"+str(i)+".wav", input_batch[1][0][i].detach().numpy(), 44100)
+    sf.write("solo"+str(i)+".wav", input_batch[1][1][i].detach().numpy(), 44100)
+    sf.write("drumgan"+str(i)+".wav", sound_batch[i].detach().numpy(), 44100)
 
 
 if __name__ == '__main__':
