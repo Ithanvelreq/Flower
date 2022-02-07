@@ -1,8 +1,9 @@
+import math
 import os
 import soundfile as sf
 import torch.jit
 from torch.utils.data import DataLoader
-
+from FlowerGlow import Glow
 from Olesia import Olesia
 from data import prepare_fn_groups, ContrastLoader
 from utils import get_audio_length, nr_samples, my_torch_istft
@@ -54,8 +55,13 @@ if __name__ == '__main__':
                                             num_workers=5, drop_last=True)
     olesia = Olesia("./encoderOlesia15.pt")
     drumgan = torch.jit.load("./TrainedDrumGAN.pt", map_location='cpu')
+    contrastive = torch.jit.load("./encoderContrastiveMix.pt")
+    flower = Glow(1, 1, 1, input_dims=(4, 8, 8))
     for entry in enumerate(train_loader):
-        z = olesia(entry[1][0])
+        z = olesia(entry[1][1])
+        w = contrastive(entry[1][0])
+        w = w.reshape(w.shape[0], 4, 8, 8)# 1, int(math.sqrt(w.shape[1])), int(math.sqrt(w.shape[1])))
+        p = flower(w)
         sound = drumgan(z)[0]
         sound = my_torch_istft(sound)
         print("hh")
